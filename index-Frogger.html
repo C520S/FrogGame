@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Froggergame</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000000;
+        }
+
+        canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <canvas id='mycanvas'></canvas>
+    <script>
+        //Creating Canvas Tags
+        let canvas = document.getElementById('mycanvas');
+        let ctx = canvas.getContext('2d');
+        let ww = 672;
+        let wh = 744;
+        canvas.width = ww;
+        canvas.height = wh;
+        let grade = 0;
+        let bg = new Image();
+        bg.src = 'img/bg.png';
+        let fgp = new Image();
+        fgp.src = 'img/frogSheet.png';
+        let ycp = new Image();
+        ycp.src = 'img/ycar.png';
+        let gcp = new Image();
+        gcp.src = 'img/gcar.png';
+        let pcp = new Image();
+        pcp.src = 'img/pcar.png';
+        let rcp = new Image();
+        rcp.src = 'img/rcar.png';
+        let bcp = new Image();
+        bcp.src = 'img/bcar.png';
+        let tlep = new Image();
+        tlep.src = 'img/turtle3.png';
+        let logfp = new Image();
+        logfp.src = 'img/logf.png';
+        let log2p = new Image();
+        log2p.src = 'img/log_2.png';
+        let tle2p = new Image();
+        tle2p.src = 'img/turtle2.png';
+        let log3p = new Image();
+        log3p.src = 'img/log_3.png';
+        let winFrog = new Image();
+        winFrog.src = 'img/winfrog.png'
+        let hitbox = new Image();
+        hitbox.src = 'img/hitbox.png'
+        let winFrog1 = false;
+        let winFrog2 = false;
+        let winFrog3 = false;
+        let winFrog4 = false;
+        let winFrog5 = false;
+        let TurtleTimer = 32;
+        let TurtleTimer2 = 32;
+        setInterval(function () {
+            TurtleTimer = TurtleTimer + 32;
+            if (TurtleTimer > 161) {
+                TurtleTimer = 0;
+            }
+        }, 800)
+        setInterval(function () {
+            TurtleTimer2 = TurtleTimer2 + 32;
+            if (TurtleTimer2 > 161) {
+                TurtleTimer2 = 0;
+            }
+        }, 1000)
+        let timeRect = new Image();
+        timeRect.src = 'img/Timerect.png'
+        let timeRectWidth = 0
+        let time2 = 80
+        setInterval(function () {
+            time2--;
+            if (time2 !== 0) {
+                timeRectWidth = timeRectWidth + 4.5625;
+
+            } else {
+                time2 = 40;
+                timeRectWidth = 0;
+                lives--;
+                lifeFrogs.pop();
+                getFrog()
+                init();
+            }
+        }, 1000);
+        let gameTimeIcon = new Image();
+        gameTimeIcon.src = 'img/gameTime.png';
+        let lives = 3;
+        let bgWin = new Image();
+        bgWin.src = 'img/bgWin.png';
+        let bgLose = new Image();
+        bgLose.src = 'img/bgLose.png';
+        let scoreIcon = new Image();
+        scoreIcon.src = 'img/score.png';
+        let textControl = 'Please use WASD to control the frog'
+        let death = new Image();
+        death.src = 'img/death.png'
+        var frogx;
+        var frogy;
+        let frogDeath = false;
+
+
+        // Create Class
+        class Frog {
+            constructor(args) {
+                let def = {
+                    x: 0,
+                    y: 0,
+                    v: {
+                        x: 0,
+                        y: 0,
+                    },
+                    width: 0,
+                    height: 0,
+                    frameCounter: 0,
+                    animationFrames: 2,
+                    frameTimeCounter: 0,
+                    frameRate: 4,
+                    movementDirection: 'UP',
+                }
+                Object.assign(def, args);
+                Object.assign(this, def);
+            }
+            draw() {
+
+                let animationFrameStartCoordX = 0;
+                switch (this.movementDirection) {
+                    case "UP":
+                        animationFrameStartCoordX = 0;
+                        break;
+                    case "DOWN":
+                        animationFrameStartCoordX = 98;
+                        break;
+                    case "LEFT":
+                        animationFrameStartCoordX = 192;
+                        break;
+                    case "RIGHT":
+                        animationFrameStartCoordX = 288;
+                        break;
+                }
+                ctx.drawImage(fgp, animationFrameStartCoordX + this.frameCounter * 48, 0, 48, 48, this.x, this.y, this.width, this.height);
+
+            }
+            moveUp() {
+                if (this.y < 73) {
+                    return;
+                }
+                this.movementDirection = "UP";
+                this.y = this.y - this.v.y;
+                grade = grade + 10;
+            }
+            moveDown() {
+                if (this.y > 620) {
+                    return;
+                }
+                this.movementDirection = "DOWN";
+                this.y = this.y + this.v.y;
+                grade = grade - 10;
+            }
+
+            moveLeft() {
+                if (this.x < 35) {
+                    return;
+                }
+                this.movementDirection = "LEFT";
+                this.x = this.x - this.v.x;
+            }
+
+            moveRight() {
+                if (this.x > 600) {
+                    return;
+                }
+                this.movementDirection = "RIGHT";
+                this.x = this.x + this.v.x;
+            }
+            update(deltaTime) {
+                this.frameTimeCounter += deltaTime;
+                if (this.frameTimeCounter > 1000 / this.frameRate) {
+                    this.frameTimeCounter = 0;
+
+                    this.frameCounter++;
+
+                    if (this.frameCounter >= this.animationFrames) {
+                        this.frameCounter = 0;
+                    }
+                }
+            }
+        }
+
+        class Car {
+            constructor(args) {
+                let def = {
+                    x: 0,
+                    y: 0,
+                    v: {
+                        x: 0,
+                        y: 0,
+                    },
+                    width: 0,
+                    height: 0,
+                }
+                Object.assign(def, args);
+                Object.assign(this, def);
+            }
+            update() {
+
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height))) {
+                    getFrog();
+                    lifeCounter();
+                    init();
+                }
+
+
+                this.x = this.x + this.v.x;
+
+            }
+            draw() {
+                ctx.drawImage(ycp, this.x, this.y, this.width, this.height);
+            }
+            draw2() {
+                ctx.drawImage(gcp, this.x, this.y, this.width, this.height);
+            }
+            draw3() {
+                ctx.drawImage(pcp, this.x, this.y, this.width, this.height);
+            }
+            draw4() {
+                ctx.drawImage(rcp, this.x, this.y, this.width, this.height);
+            }
+            draw5() {
+                ctx.drawImage(bcp, this.x, this.y, this.width, this.height);
+            }
+
+        }
+        class Stuff {
+            constructor(args) {
+                let def = {
+                    x: 0,
+                    y: 0,
+                    v: {
+                        x: 0,
+                        y: 0,
+                    },
+                    width: 0,
+                    height: 0,
+                }
+                Object.assign(def, args);
+                Object.assign(this, def);
+            }
+            update() {
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height))) {
+                    frog.x = frog.x + this.v.x;
+                }
+                if (frog.x < 0 || frog.x > ww) {
+                    lifeCounter();
+                    getFrog();
+                    init();
+                }
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height)) && (TurtleTimer == 160) && (this.y == 320)) {
+                    getFrog();
+                    lifeCounter();
+                    init();
+                }
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height)) && (TurtleTimer2 == 160) && (this.y == 180)) {
+                    getFrog();
+                    lifeCounter();
+                    init();
+                }
+                this.x = this.x + this.v.x;
+
+            }
+            draw() {
+                ctx.drawImage(tlep, 0, TurtleTimer, 124, 32, this.x, this.y, this.width, this.height);
+
+            }
+            draw1() {
+                ctx.drawImage(logfp, this.x, this.y, this.width, this.height);
+
+            }
+            draw2() {
+                ctx.drawImage(log2p, this.x, this.y, this.width, this.height);
+
+            }
+            draw3() {
+                ctx.drawImage(tle2p, 0, TurtleTimer2, 82, 32, this.x, this.y, this.width, this.height);
+
+            }
+            draw4() {
+                ctx.drawImage(log3p, this.x, this.y, this.width, this.height);
+
+            }
+
+
+        }
+
+
+        class Water {
+            constructor(args) {
+                let def = {
+                    x: 0,
+                    y: 0,
+                    v: {
+                        x: 0,
+                        y: 0,
+                    },
+                    width: 0,
+                    height: 0,
+                }
+                Object.assign(def, args);
+                Object.assign(this, def);
+            }
+            update() {
+                if (((this.x + this.width - 20) > frog.x) &&
+                    (this.x < (frog.x + frog.width - 20)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height))) {
+                    lifeCounter();
+                    getFrog();
+                    init();
+                }
+
+                this.x = this.x + this.v.x;
+
+            }
+            draw() {
+                ctx.fillStyle = '#1830ac';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+            }
+
+        }
+        class Topbox {
+            constructor(args) {
+                let def = {
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                }
+                Object.assign(def, args);
+                Object.assign(this, def);
+            }
+            update() {
+
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height)) && (this.id == 1)) {
+                    winFrog1 = true;
+                    grade = grade + 40;
+                    init();
+
+
+
+                }
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height)) && (this.id == 2)) {
+                    winFrog2 = true;
+                    grade = grade + 40;
+                    init();
+
+
+
+                }
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height)) && (this.id == 3)) {
+                    winFrog3 = true;
+                    grade = grade + 40;
+                    init();
+
+
+
+                }
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height)) && (this.id == 4)) {
+                    winFrog4 = true;
+                    grade = grade + 40;
+                    init();
+
+
+
+                }
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height)) && (this.id == 5)) {
+                    winFrog5 = true;
+                    grade = grade + 40;
+                    init();
+
+
+
+                }
+            }
+            draw() {
+                ctx.fillStyle = '#1830ac';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+            }
+
+        }
+        class TopPhoto {
+            constructor(args) {
+                let def = {
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                }
+                Object.assign(def, args);
+                Object.assign(this, def);
+            }
+
+            draw() {
+                if (winFrog1 === true) {
+                    ctx.drawImage(winFrog, 40, 61, this.width, this.height);
+
+                }
+                if (winFrog2 === true) {
+                    ctx.drawImage(winFrog, 178, 61, this.width, this.height);
+
+                }
+                if (winFrog3 === true) {
+                    ctx.drawImage(winFrog, 311, 61, this.width, this.height);
+
+                }
+                if (winFrog4 === true) {
+                    ctx.drawImage(winFrog, 445, 61, this.width, this.height);
+
+                }
+                if (winFrog5 === true) {
+                    ctx.drawImage(winFrog, 579, 61, this.width, this.height);
+
+                }
+            }
+
+        }
+        let iconWinfrog = new TopPhoto({
+            width: 55,
+            height: 55,
+
+        });
+
+        class Grass {
+            constructor(args) {
+                let def = {
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                }
+                Object.assign(def, args);
+                Object.assign(this, def);
+            }
+            update() {
+
+                if (((this.x + this.width) > frog.x) &&
+                    (this.x < (frog.x + frog.width)) &&
+                    ((this.y + this.height) > frog.y) &&
+                    (this.y < (frog.y + frog.height))) {
+                    lifeCounter();
+                    getFrog();
+                    init();
+
+
+                }
+            }
+            draw() {
+                ctx.drawImage(hitbox, this.x, this.y, this.width, this.height);
+
+            }
+        }
+        class LifeIcon {
+            constructor(args) {
+                let def = {
+                    x: 0,
+                    y: 0,
+                    width: 0,
+                    height: 0,
+                }
+                Object.assign(def, args);
+                Object.assign(this, def);
+            }
+
+            draw() {
+                ctx.drawImage(fgp, 0, 0, 48, 48, this.x, this.y, 25, 25);
+
+            }
+        }
+        let lifeFrogs = [
+            new LifeIcon({
+                x: 650,
+                y: 695,
+            }),
+            new LifeIcon({
+                x: 625,
+                y: 695,
+
+            }),
+        ];
+
+
+        var frog;
+        function init() {
+            frog = new Frog({
+                x: 320,
+                y: 648,
+                v: {
+                    x: 48,
+                    y: 48,
+                },
+                width: 48,
+                height: 48,
+            });
+
+
+        };
+        let time = 120;
+        let car1 = [];
+        let car2 = [];
+        let car3 = [];
+        let car4 = [];
+        let car5 = [];
+        let tles = [];
+        let wa1 = [];
+        let logfs = [];
+        let wa2 = [];
+        let logfs2 = [];
+        let wa3 = [];
+        let tles2 = [];
+        let wa4 = [];
+        let logfs3 = [];
+        let wa5 = [];
+        let topboxs = [
+            new Topbox(
+                {
+                    id: 1,
+                    x: 40,
+                    y: 61,
+                    width: 50,
+                    height: 50,
+                }
+            ),
+            new Topbox(
+                {
+                    id: 2,
+                    x: 178,
+                    y: 61,
+                    width: 52,
+                    height: 52,
+                }
+            ),
+            new Topbox(
+                {
+                    id: 3,
+                    x: 311,
+                    y: 61,
+                    width: 52,
+                    height: 52,
+                }
+            ),
+            new Topbox(
+                {
+                    id: 4,
+                    x: 445,
+                    y: 61,
+                    width: 52,
+                    height: 52,
+                }
+            ),
+            new Topbox(
+                {
+                    id: 5,
+                    x: 579,
+                    y: 61,
+                    width: 52,
+                    height: 52,
+                }
+            ),
+        ];
+
+        let glasses = [
+            new Grass(
+                {
+                    x: 110,
+                    y: 61,
+                    width: 60,
+                    height: 50,
+                }
+            ),
+            new Grass(
+                {
+                    x: 245,
+                    y: 61,
+                    width: 60,
+                    height: 50,
+                }
+            ),
+            new Grass(
+                {
+                    x: 380,
+                    y: 61,
+                    width: 60,
+                    height: 50,
+                }
+            ),
+            new Grass(
+                {
+                    x: 515,
+                    y: 61,
+                    width: 40,
+                    height: 50,
+                }
+            ),
+        ];
+        //Update data
+        function update() {
+
+            if (time % 120 == 0) {
+                let ycar = new Car(
+                    {
+                        x: ww,
+                        y: 604,
+                        v: {
+                            x: -3,
+                        },
+                        width: 42,
+                        height: 36,
+
+                    }
+                );
+                car1.push(ycar);
+            }
+
+            car1.forEach(ycar => ycar.update());
+            if (time % 120 == 0) {
+                let gcar = new Car(
+                    {
+                        x: -100,
+                        y: 554,
+                        v: {
+                            x: 3,
+                        },
+                        width: 42,
+                        height: 36,
+
+                    }
+                );
+                car2.push(gcar);
+            }
+
+            car2.forEach(gcar => gcar.update());
+
+            if (time % 120 == 0) {
+                let pcar = new Car(
+                    {
+                        x: 990,
+                        y: 512,
+                        v: {
+                            x: -3,
+                        },
+                        width: 42,
+                        height: 36,
+
+                    }
+                );
+                car3.push(pcar);
+            }
+
+            car3.forEach(pcar => pcar.update());
+
+            if (time % 120 == 0) {
+                let rcar = new Car(
+                    {
+                        x: -200,
+                        y: 465,
+                        v: {
+                            x: 3,
+                        },
+                        width: 42,
+                        height: 36,
+
+                    }
+                );
+                car4.push(rcar);
+            }
+
+            car4.forEach(rcar => rcar.update());
+            if (time % 120 == 0) {
+                let bcar = new Car(
+                    {
+                        x: 780,
+                        y: 410,
+                        v: {
+                            x: -2,
+                        },
+                        width: 70,
+                        height: 30,
+
+                    }
+                );
+                car5.push(bcar);
+            }
+
+            car5.forEach(bcar => bcar.update());
+            if (time % 120 == 0) {
+                let tle3 = new Stuff(
+                    {
+                        x: 650,
+                        y: 320,
+                        v: {
+                            x: -4,
+                        },
+                        width: 124,
+                        height: 32,
+
+                    }
+                );
+                tles.push(tle3);
+            }
+            tles.forEach(tle3 => tle3.update());
+
+            if (time % 120 == 0) {
+                let water1 = new Water(
+                    {
+                        x: 310,
+                        y: 320,
+                        v: {
+                            x: -4,
+                        },
+                        width: 340,
+                        height: 32,
+
+                    }
+                );
+                wa1.push(water1);
+            }
+            wa1.forEach(water1 => water1.update());
+            if (time % 120 == 0) {
+                let logf = new Stuff(
+                    {
+                        x: -104,
+                        y: 280,
+                        v: {
+                            x: 2,
+                        },
+                        width: 96,
+                        height: 32,
+
+                    }
+                );
+                logfs.push(logf);
+            }
+            logfs.forEach(logf => logf.update());
+            if (time % 120 == 0) {
+                let water2 = new Water(
+                    {
+                        x: 0,
+                        y: 280,
+                        v: {
+                            x: 2,
+                        },
+                        width: 120,
+                        height: 32,
+
+                    }
+                );
+                wa2.push(water2);
+            }
+            wa2.forEach(water2 => water2.update());
+            if (time % 120 == 0) {
+                let log_2 = new Stuff(
+                    {
+                        x: -104,
+                        y: 230,
+                        v: {
+                            x: 2,
+                        },
+                        width: 192,
+                        height: 32,
+
+                    }
+                );
+                logfs2.push(log_2);
+            }
+            logfs2.forEach(log_2 => log_2.update());
+            if (time % 120 == 0) {
+                let water3 = new Water(
+                    {
+                        x: 90,
+                        y: 230,
+                        v: {
+                            x: 2,
+                        },
+                        width: 40,
+                        height: 32,
+
+                    }
+                );
+                wa3.push(water3);
+            }
+            wa3.forEach(water3 => water3.update());
+            if (time % 120 == 0) {
+                let tle2 = new Stuff(
+                    {
+                        x: 660,
+                        y: 180,
+                        v: {
+                            x: -2,
+                        },
+                        width: 82,
+                        height: 32,
+
+                    }
+                );
+                tles2.push(tle2);
+            }
+            tles2.forEach(tle2 => tle2.update());
+            if (time % 120 == 0) {
+                let water4 = new Water(
+                    {
+                        x: 510,
+                        y: 180,
+                        v: {
+                            x: -2,
+                        },
+                        width: 140,
+                        height: 32,
+
+                    }
+                );
+                wa4.push(water4);
+            }
+            wa4.forEach(water4 => water4.update());
+            if (time % 120 == 0) {
+                let log_3 = new Stuff(
+                    {
+                        x: -144,
+                        y: 130,
+                        v: {
+                            x: 2,
+                        },
+                        width: 144,
+                        height: 32,
+
+                    }
+                );
+                logfs3.push(log_3);
+            }
+            logfs3.forEach(log_3 => log_3.update());
+            if (time % 120 == 0) {
+                let water5 = new Water(
+                    {
+                        x: 0,
+                        y: 130,
+                        v: {
+                            x: 2,
+                        },
+                        width: 100,
+                        height: 32,
+
+                    }
+                );
+                wa5.push(water5);
+            }
+            wa5.forEach(water5 => water5.update());
+            time++;
+            for (let i = 0; i < topboxs.length; i++) {
+                topboxs[i].update();
+
+            }
+            for (let i = 0; i < glasses.length; i++) {
+                glasses[i].update();
+            }
+
+
+
+        };
+        let lastTimeStamp = 0;
+        let deathTime = 0;
+        //Drawing images
+        function draw(timeStamp) {
+            if (lives == 0) {
+                ctx.drawImage(bgWin, 0, 0, ww, wh);
+                return;
+            }
+            if ((winFrog1 === true) && (winFrog2 === true) && (winFrog3 === true) && (winFrog4 === true) && (winFrog5 === true)) {
+                ctx.drawImage(bgLose, 0, 0, ww, wh);
+                return;
+            }
+            let deltaTime = timeStamp - lastTimeStamp;
+            lastTimeStamp = timeStamp;
+            deathTime++;
+            frog.update(deltaTime);
+            ctx.drawImage(bg, 0, 0, ww, wh);
+            car1.forEach(ycar => ycar.draw());
+            car2.forEach(gcar => gcar.draw2());
+            car3.forEach(pcar => pcar.draw3());
+            car4.forEach(pcar => pcar.draw4());
+            car5.forEach(bcar => bcar.draw5());
+            tles.forEach(tle3 => tle3.draw());
+            wa1.forEach(water1 => water1.draw());
+            logfs.forEach(logf => logf.draw1());
+            wa2.forEach(water2 => water2.draw());
+            logfs2.forEach(log_2 => log_2.draw2());
+            wa3.forEach(water3 => water3.draw());
+            tles2.forEach(tle2 => tle2.draw3());
+            wa4.forEach(water4 => water4.draw());
+            logfs3.forEach(log_3 => log_3.draw4());
+            wa5.forEach(water5 => water5.draw());
+            ctx.fillStyle = "white";
+            ctx.font = '30px Times New Roman';
+            ctx.fillText(grade, 10, 40);
+            ctx.fillStyle = "white";
+            ctx.font = '20px Times New Roman';
+            ctx.fillText(textControl, 190, 20);
+
+            ctx.drawImage(scoreIcon, 0, 0, 87, 15);
+            for (let i = 0; i < topboxs.length; i++) {
+                topboxs[i].draw();
+            }
+            for (let i = 0; i < glasses.length; i++) {
+                glasses[i].draw();
+            }
+            iconWinfrog.draw();
+            ctx.drawImage(timeRect, timeRectWidth, 0, 365, 20, 150, 708, 365, 20);
+            ctx.drawImage(gameTimeIcon, 53, 708, 73, 20);
+            for (let i = 0; i < lifeFrogs.length; i++) {
+                lifeFrogs[i].draw();
+            }
+            if (frogDeath === true) {
+                ctx.drawImage(death, frogx, frogy, 40, 40);
+
+            }
+            if ((deathTime % 30 == 0) && (frogDeath === true)) {
+                frogDeath = false;
+            }
+
+            frog.draw();
+
+
+
+            requestAnimationFrame(draw);
+        };
+
+        init();
+        let fps = 55;
+        setInterval(update, 1000 / fps);
+        requestAnimationFrame(draw);
+        window.addEventListener('keydown', function (event) {
+            switch (event.keyCode) {
+                case 65:
+                    console.log('LEFT!');
+                    frog.moveLeft();
+                    break;
+                case 87:
+                    console.log('UP!');
+                    frog.moveUp();
+                    break;
+                case 68:
+                    console.log('RIGHT!');
+                    frog.moveRight();
+                    break;
+                case 83:
+                    console.log('DOWN!');
+                    frog.moveDown();
+                    break;
+                case 89:
+                    console.log('89!');
+                    location.reload(true);
+                    break;
+
+            }
+        });
+        function lifeCounter() {
+            grade = grade - 40;
+            if (grade < 0) {
+                grade = 0;
+            }
+            lives--;
+            lifeFrogs.pop();
+        }
+        function getFrog() {
+            frogDeath = true;
+            frogx = frog.x
+            frogy = frog.y
+
+        }
+
+
+    </script>
+
+</body>
+
+</html>
